@@ -10,14 +10,16 @@
 void *thread_funcForUpload(void *arg)
 {
     int sfd = *((int *)arg);
+    char recvbuf[BUFSIZE] = "";
     char sendbuf[BUFSIZE] = "";
     char name[BUFSIZE] = "";
-    char sendbufOfchar[5] = "";   //5 char one cir
+    char recvbufOfchar[5] = "";   //5 char one cir
     int ret;
+    int size = 0;
     //recv Name
     recv(*((int *)arg),name,sizeof(name),0);
     sprintf(name,"./file/%s",name);      //if open failed  then how to process
-    int fd = open(name,O_RDWT | O_RDWT, 0666);
+    int fd = open(name,O_RDWR | O_CREAT, 0666);
     if (fd < 0)
     {
         perror("open");
@@ -26,10 +28,24 @@ void *thread_funcForUpload(void *arg)
     else
         printf("open file success");
     //send ->ready
+    strcpy(sendbuf,"ready");
+    send(sfd,sendbuf,sizeof(sendbuf),0);
     //recv size
-    //while(size)
-    //recv into recvbuf
-    //write into ./file/name
+    recv(sfd,&size,sizeof(int),0);
+    size = ntohs(size);
+
+    while (size)                                                 //at the client: send size for server 
+    {
+        ret = recv(sfd,recvbufOfchar,sizeof(recvbufOfchar),0);
+        printf("recv %d charachters\r\n",ret);
+        write(fd,recvbufOfchar,sizeof(recvbufOfchar));
+        size = size - sizeof(recvbufOfchar);
+        size = htons(size);
+        send(sfd,&size,sizeof(int),0);
+        memset(recvbufOfchar,0,sizeof(recvbufOfchar));
+    }
+    printf("down!\r\n");
+    close(sfd);
 
 }
 
