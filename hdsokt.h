@@ -30,9 +30,12 @@
 #define UPLOAD 2
 #define BUFSIZE 50
 #define PIDNUM 20
-
+/*
 #define SIGINFAIL 0     //zhuce
 #define SIGINSUCC 1
 #define LOGINFAIL 2     //denglu
 #define LOGINSUCC 3
+*/
+#define REGISTER 3
+#define LOGIN 4
 #endif

@@ -12,6 +12,7 @@ int main()
 {
 	struct sockaddr_in s_addr;
 	int sfd,fd,size;
+    char name[BUFSIZE] ="";
 	char sendbuf[50] = "";
 	char recvbuf[50] = "";
     int choice;
@@ -28,7 +29,7 @@ int main()
     }
 	//set server's IP & port
 	s_addr.sin_family = AF_INET;
-	s_addr.sin_port = htons(9999);
+	s_addr.sin_port = htons(4321);
 	inet_pton(AF_INET,"127.0.0.1",&s_addr.sin_addr);
 
 
@@ -40,27 +41,36 @@ int main()
     }
     //send choice
     choice = DOWNLOAD;
+    choice = htons(choice);
     res = send(sfd,&choice,sizeof(choice),0);
     if (res < 0)
     {
         perror("send");
         exit(-1);
     }
-    //recv file name
-    res = read(sfd,recvbuf,sizeof(recvbuf));
+    //send file name  test-> name = "document"
+    strcpy(name,"document"); //just for test
+    res = send(sfd,&name,sizeof(name),0);
 	if(res < 0)
 	{
-		perror("read");
+		perror("send");
 		exit(-1);
 	}
-	fd = open(recvbuf,O_RDWR | O_CREAT,0666);
+    recv(sfd,recvbuf,sizeof(recvbuf),0);
+    if(strcmp(recvbuf,"nothing"))
+    {
+        printf("the name that is %s is inexitence",name);
+        exit(-1);
+    }
+	fd = open(name,O_RDWR | O_CREAT,0666);
 	if (fd < 0)
 	{
 		perror("open");
 		exit(-1);
 	}
     //recv size
-	read(sfd,&size,sizeof(size));
+	recv(sfd,&size,sizeof(size),0);
+    size = ntohs(size);
     memset(recvbuf,0,sizeof(recvbuf));
 	while(size != 0)
 	{

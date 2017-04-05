@@ -5,7 +5,6 @@
 	> Created Time: Thu 30 Mar 2017 03:56:51 PM CST
  ************************************************************************/
 
-#include<stdio.h>
 #include"hdsokt.h"
 /*new fd and bind to return fd*/
 int Initsocket(struct sockaddr_in * svr_addr,int port, char *ip)
@@ -23,6 +22,11 @@ int Initsocket(struct sockaddr_in * svr_addr,int port, char *ip)
     svr_addr->sin_port = htons(port);
     inet_pton(AF_INET, ip,&(svr_addr->sin_addr));
 
+    if(bind(sfd , (struct sockaddr *)svr_addr, sizeof(*svr_addr)) != 0)
+    {
+        perror("bind");
+        exit(-1);
+    }
     return sfd;
 }
  

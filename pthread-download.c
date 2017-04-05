@@ -5,7 +5,6 @@
     > Created Time: Mon 03 Apr 2017 04:08:00 PM CST
  ************************************************************************/
 #include"hdsokt.h"
-#include"func.h"
 void *thread_funcForDownload(void *arg)
 {
     char sendbuf[BUFSIZE] = "";
@@ -13,7 +12,7 @@ void *thread_funcForDownload(void *arg)
     char sendbufOfchar[5] = "";   //5 char one cir
     int ret;
     int c_fd = *((int *)arg);
-    recv(*((int *)arg),name,sizeof(name),0);
+    recv(*((int *)arg),name,sizeof(name),0); //recv name
 
     //open File
     sprintf(name,"./file/%s",name);      //if open failed  then how to process
@@ -21,6 +20,8 @@ void *thread_funcForDownload(void *arg)
     if (fd < 0)
     {
         perror("open");
+        strcpy(sendbuf,"nothing");
+        send(c_fd,sendbuf,sizeof(sendbuf),0); //if open failed and send to client
         exit(-1);
     }
     else

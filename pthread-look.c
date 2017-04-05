@@ -6,7 +6,6 @@
  ************************************************************************/
 
 #include"hdsokt.h"
-#include"func.h"
 #include<dirent.h>
 void *thread_funcForLook(void *arg)
 {
