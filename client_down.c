@@ -16,6 +16,7 @@ int main()
 	char sendbuf[50] = "";
 	char recvbuf[50] = "";
     int choice;
+    int getsvr;
 	int res;
 	int s_len = sizeof(s_addr);
 
@@ -39,8 +40,24 @@ int main()
         perror("connect");
         exit(-1);
     }
+    //send to sql
+    choice = LOGIN;
+    choice = htons(choice);
+    send(sfd, &choice,sizeof(choice),0);
+    strcpy(sendbuf,"LaoWang#123456");
+    send(sfd, sendbuf,sizeof(sendbuf),0);
+    //send name pwd
+    recv(sfd, &getsvr, sizeof(getsvr),0);
+    if ( getsvr == ERROR )
+    {
+        printf("svr error");
+        exit(-1);
+    }
+    recv(sfd,recvbuf,sizeof(recvbuf),0);
+    printf("%s\n",recvbuf);
     //send choice
-    choice = DOWNLOAD;
+
+    choice = DOWNLOAD;  //just for test to menu
     choice = htons(choice);
     res = send(sfd,&choice,sizeof(choice),0);
     if (res < 0)
@@ -57,7 +74,7 @@ int main()
 		exit(-1);
 	}
     recv(sfd,recvbuf,sizeof(recvbuf),0);
-    if(strcmp(recvbuf,"nothing"))
+    if(strcmp(recvbuf,"nothing") == 1)
     {
         printf("the name that is %s is inexitence",name);
         exit(-1);

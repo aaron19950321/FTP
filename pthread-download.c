@@ -40,15 +40,6 @@ void *thread_funcForDownload(void *arg)
         perror("strcpy");
         exit(-1);
     }
-    //send file name
-    ret = send(c_fd,sendbuf,sizeof(sendbuf),0);
-    if (ret < 0)
-    {
-        perror("send");
-        exit(-1);
-    }
-    else
-        printf("File name was sent!\r\n");
     //send size
     ret = send(c_fd,&size,sizeof(int),0);
     if (ret < 0)

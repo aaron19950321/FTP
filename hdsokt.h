@@ -36,6 +36,7 @@
 #define LOGINFAIL 2     //denglu
 #define LOGINSUCC 3
 */
-#define REGISTER 3
-#define LOGIN 4
+#define REGISTER 1
+#define LOGIN 2
+#define ERROR 0
 #endif

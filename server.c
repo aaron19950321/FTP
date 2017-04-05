@@ -13,6 +13,7 @@ int main()
     int sfd;                                                     //for listen
     pthread_t pid[PIDNUM];                                       //pthread's num
     int recvbuf;                                                 //recv choice
+    int Toclient;
     char sendbuf[BUFSIZE] = "";
     char name_pwd[BUFSIZE] = "";
     char name[BUFSIZE] = "";
@@ -38,6 +39,12 @@ int main()
 
     sfd = Initsocket(&svr_addr,4321,"127.0.0.1");
 
+    //connect sql
+    mysql_init(&conn);
+    if (mysql_real_connect(&conn,"localhost","root","84219875","db_test",0,NULL,0))
+    {
+        printf("sql connect success\r\n");
+    }
     //listen
     res = listen(sfd,5);
     if (res == -1)
@@ -99,6 +106,7 @@ int main()
                 while(1)
                 {
                     res = recv(c_fd[i],&recvbuf,sizeof(recvbuf),0);
+                    recvbuf = ntohs(recvbuf);
                     if(recvbuf == REGISTER)
                     {
                         recv(c_fd[i],&name_pwd,sizeof(name_pwd),0);
@@ -125,10 +133,14 @@ int main()
                         if(res)
                         {
                             printf("do failed\n");
+                            Toclient = ERROR;
+                            send(c_fd[i],&Toclient,sizeof(Toclient),0);
                             mysql_close(&conn);
                         }
                         else
                         {
+                            Toclient = 100;
+                            send(c_fd[i],&Toclient,sizeof(Toclient),0);
                             //检索完整的结果集
                             res_ptr = mysql_store_result(&conn);
                             if(res_ptr)
@@ -141,7 +153,11 @@ int main()
                                     send(c_fd[i],sbuf,sizeof(sbuf),0);
                                 }
                                 else
+                                {
+                                    strcpy(sbuf,"login success");
+                                    send(c_fd[i],sbuf,sizeof(sbuf),0);
                                     break;
+                                }
                             }
                         }
                     }
