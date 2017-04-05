@@ -10,13 +10,16 @@
 #include<dirent.h>
 void *thread_funcForLook(void *arg)
 {
+    int sfd = *((int *)arg);
+    char sendbuf[BUFSIZE] = "";
     DIR * dir = opendir("./file/");
     struct dirent * ptr ;
     while((ptr = readdir(dir)) != NULL)
     {
-        strcat((char *)arg,ptr->d_name);
-        strcat((char *)arg,"-");
+        strcat(sendbuf,ptr->d_name);
+        strcat(sendbuf,"-");
     }
+    send(sfd,sendbuf,sizeof(sendbuf),0);
     closedir(dir);
 }
 

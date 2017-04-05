@@ -16,7 +16,8 @@ int Initsocket(struct sockaddr_in * svr_addr,int port, char *ip);
  * pthread func
  */
 void *thread_funcForDownload(void *arg);
-void *thread_funcForLook(void * arg);
+void *thread_funcForLook(void *arg);
+void *thread_funcForUpload(void *arg);
 /*
  *For transfer parameter into (void *)arg
  */

@@ -12,7 +12,7 @@ int main()
     /*define the stack var*/
     int sfd;                                                     //for listen
     pthread_t pid[PIDNUM];                                       //pthread's num
-    int recvbuf;
+    int recvbuf;                                                 //recv choice
     char sendbuf[BUFSIZE] = "";
     char nameOfDir[BUFSIZE] ="";
     char name[BUFSIZE];
@@ -41,8 +41,8 @@ int main()
 
     //init select
     count = 0;
-
     memset(c_fd,-1,sizeof(c_fd));
+
     while(1)
     {
         FD_ZERO(&rdset);
@@ -83,7 +83,16 @@ int main()
         {
             if(c_fd[i] != -1 && FD_ISSET(c_fd[i], &rdset))
             {
-                //read
+                /*
+                 *sql
+                 *send -> client to begin
+                 *while(~DLsuccess)
+                 *recv <- choice (zhuce,denglu)
+                 *if zhuce then recv <-name pwd ,and insert to sql ,if success set fail=0,send ->zhuce'success.client (1)
+                 *if denglu then recv <-name pwd ,and select   ,if insert DLsuccess ...
+                 *
+                 *if success ,then recv choice
+                 */
                 res = recv(c_fd[i],&recvbuf,sizeof(int),0);     //recv choice    
                 /*
                  *
@@ -111,25 +120,26 @@ int main()
                 {
                     switch(recvbuf)
                     {
-                        case LOOK :                //recv name of dir  ,in order to test,nameOfDir = Document
-                                    if (pthread_create(&pid[i],NULL,thread_funcForLook,(void *)name) != 0)
+                        case LOOK :                
+                                    if (pthread_create(&pid[i],NULL,thread_funcForLook,(void *)&c_fd[i]) != 0)
                                     {
                                         perror("pthread_Look");
                                         exit(-1);
                                     }
-                                    send(sfd,name,sizeof(name),0);   //send all the file name
-                                    recv(sfd,name,sizeof(name),0);   //recv the one client want to DOWNLOAD
-
                                     break;
                         case DOWNLOAD :
-                                    merge(nameOfDir,(char *)&c_fd[i],"document"/*input in var:name*/);   //(int)(char)
-                                    if (pthread_create(&pid[i],NULL,thread_funcForDownload,(void *)&nameOfDir) != 0)
+                                    if (pthread_create(&pid[i],NULL,thread_funcForDownload,(void *)&c_fd[i]) != 0)
                                     {
                                         perror("pthread_create");
                                         exit(-1);
                                     }
                                     break;
                         case UPLOAD :
+                                    if (pthread_create(&pid[i],NULL,thread_funcForUpload,(void *)&c_fd[i]) != 0)
+                                    {
+                                        perror("pthread_create");
+                                        exit(-1);
+                                    }
                                     break;
                         default : 
                             perror("switch");

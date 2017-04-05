@@ -8,13 +8,13 @@
 #include"func.h"
 void *thread_funcForDownload(void *arg)
 {
-    char sendbyyuf[BUFSIZE] = "";
-    char sendbufOfchar[5] = "";   //5 char one cir
+    char sendbuf[BUFSIZE] = "";
     char name[BUFSIZE] = "";
-    char c_fd[4];  //int c_fd
+    char sendbufOfchar[5] = "";   //5 char one cir
     int ret;
-    //process buf
-    splite((char *)arg,c_fd,name);
+    int c_fd = *((int *)arg);
+    recv(*((int *)arg),name,sizeof(name),0);
+
     //open File
     sprintf(name,"./file/%s",name);      //if open failed  then how to process
     int fd = open(name,O_RDONLY, 0666);
@@ -24,9 +24,7 @@ void *thread_funcForDownload(void *arg)
         exit(-1);
     }
     else
-    {
         printf("open file success");
-    }
     //get size
     int size = lseek(fd, 0, SEEK_END);
     if (size < 0)
@@ -34,6 +32,7 @@ void *thread_funcForDownload(void *arg)
         perror("lseek");
         exit(-1);
     }
+    size = htons(size);
     lseek(fd,0,SEEK_SET);
     if(NULL == strcpy(sendbuf,name))
     {
@@ -41,7 +40,7 @@ void *thread_funcForDownload(void *arg)
         exit(-1);
     }
     //send file name
-    ret = send((int)c_fd,sendbuf,sizeof(sendbuf),0);
+    ret = send(c_fd,sendbuf,sizeof(sendbuf),0);
     if (ret < 0)
     {
         perror("send");
@@ -50,7 +49,7 @@ void *thread_funcForDownload(void *arg)
     else
         printf("File name was sent!\r\n");
     //send size
-    ret = send((int)c_fd,&size,sizeof(int),0);
+    ret = send(c_fd,&size,sizeof(int),0);
     if (ret < 0)
     {
         perror("send");
@@ -60,11 +59,12 @@ void *thread_funcForDownload(void *arg)
     {
         ret = read(fd,sendbufOfchar,sizeof(sendbufOfchar));
         printf("take %d charachters\r\n",ret);
-        send((int)c_fd,sendbufOfchar,sizeof(sendbufOfchar),0);
-        read((int)c_fd, &size,sizeof(int));                     //read size
+        send(c_fd,sendbufOfchar,sizeof(sendbufOfchar),0);
+        read(c_fd, &size,sizeof(int));                     //read size
+        size = ntohs(size);
         printf("size is %d\r\n",size);
         memset(sendbufOfchar,0,sizeof(sendbufOfchar));
     }
     printf("down!\r\n");
-    close((int)c_fd);
+    close(c_fd);
 }
