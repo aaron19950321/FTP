@@ -15,21 +15,33 @@ int main()
     int recvbuf;
     char sendbuf[BUFSIZE] = "";
     char nameOfDir[BUFSIZE] ="";
-    char name[BUFSIZE];
     int i;
     int count;                                                   //for count
     int res;                                                     //for return
-
-    fd_set rdset;                                                //select <- fd
+	fd_set rdset;                                                //select <- fd
     int maxfd;
     //int *c_fd = (int *)malloc(99 * sizeof(int));                 //fd for communication
     int c_fd[99];
+
+	//new
+    char name_pwd[BUFSIZE] = "";
+    char name[BUFSIZE] = "";
+    char pwd[BUFSIZE] = "";
+	MYSQL conn;
+	char setBuf[100] = "";
+	char sbuf[BUFSIZE] = "";
 
     struct sockaddr_in svr_addr,ac_addr;                         //ac_addr is after accept
     int s_len = sizeof(svr_addr); 
     int c_len = sizeof(ac_addr);
 
     sfd = Initsocket(&svr_addr,9999,"127.0.0.1");
+
+	mysql_init(&conn);
+	if(mysql_real_connect(&conn,"localhost","root","1","test_a",0,NULL,0) )
+	{
+        printf("sql link success!\n");
+	}
 
     //listen
     res = listen(sfd,5);
@@ -83,7 +95,66 @@ int main()
         {
             if(c_fd[i] != -1 && FD_ISSET(c_fd[i], &rdset))
             {
-                //read
+                //login-register
+				while(1)
+				{
+					res = recv(c_fd[i],&recvbuf,sizeof(recvbuf),0);
+					if(recvbuf == REGISTER)
+					{
+						recv(c_fd[i],&name_pwd,sizeof(name_pwd),0);
+						splite(name_pwd,name,pwd);
+						sprintf(setBuf,"insert into User values('%s','%s')",name,pwd);
+						res = mysql_query(&conn, setBuf);
+						if(res)
+						{
+							strcpy(sbuf,"fail to register");
+							send(c_fd,sbuf,sizeof(sbuf),0);
+				        }
+					    else
+						{
+							strcpy(sbuf,"register success!");
+							send(c_fd,sbuf,sizeof(sbuf),0);
+						}
+					}
+					else if(recvbuf == LOGIN)
+					{
+						recv(c_fd[i],&name_pwd,sizeof(name_pwd),0);
+						splite(name_pwd,name,pwd);
+						sprintf(setBuf,"select * from Student where name='%s' and pwd='%s'",name,pwd);
+						res = mysql_query(&conn, setBuf);
+						if(res)
+						{
+							printf("do failed\n");
+							mysql_close(&conn);
+						}
+						else
+						{
+							 //检索完整的结果集
+							 res_ptr = mysql_store_result(&conn);
+						     if(res_ptr)
+							 {
+								//返回结果集中的行数
+								res = (unsigned long)mysql_num_rows(res_ptr);
+								if(res == 0)
+								{
+									strcpy(sbuf,"name or pwd error,login failed!");
+									send(c_fd,sbuf,sizeof(sbuf),0);
+								}
+								else
+								{
+									break;
+								}
+							 }
+
+						}
+					}
+					else
+					{
+
+					}
+				}
+				
+				//read
                 res = recv(c_fd[i],&recvbuf,sizeof(int),0);     //recv choice    
                 /*
                  *
@@ -102,17 +173,17 @@ int main()
 
                 if (res == -1)
                 {
-                    perror("recv");
+					perror("recv");
                     close(c_fd[i]);
                     c_fd[i] = -1;
                 }
 
                 if(res > 0)
                 {
-                    switch(recvbuf)
+					switch(recvbuf)
                     {
                         case LOOK :                //recv name of dir  ,in order to test,nameOfDir = Document
-                                    if (pthread_create(&pid[i],NULL,thread_funcForLook,(void *)name) != 0)
+							if (pthread_create(&pid[i],NULL,thread_funcForLook,(void *)name) != 0)
                                     {
                                         perror("pthread_Look");
                                         exit(-1);
@@ -124,7 +195,7 @@ int main()
                         case DOWNLOAD :
                                     merge(nameOfDir,(char *)&c_fd[i],"document"/*input in var:name*/);   //(int)(char)
                                     if (pthread_create(&pid[i],NULL,thread_funcForDownload,(void *)&nameOfDir) != 0)
-                                    {
+									{
                                         perror("pthread_create");
                                         exit(-1);
                                     }
